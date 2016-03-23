@@ -52,6 +52,14 @@
 // similar to LeftWallFollower
 class FloodFill : public PathFinder {
 public:
+
+    // algorithm mode
+    enum Mode
+    {
+        MODE_SEARCH,    // finding distances. Mouse should be at the center when done searching.
+        MODE_BACK_HOME, // After we reach center, find a way to go back home.    
+        MODE_FAST       // second run. Speed run.
+    };
     /**
      * Cell structure contains information of a single cell of the map.
      * info includes:  
@@ -66,7 +74,6 @@ public:
      *      only the cell that the mouse has visited has valid wall status. So before we check
      *      wall status, we need to make sure that the cell is visited.
      */
-
     struct Cell{
         Cell(){
             northWall = true;
@@ -109,10 +116,9 @@ public:
         unsigned cx, cy;
     };
 
-    FloodFill(bool shouldPause = false, bool shouldPrint = false) : pause(shouldPause), verbose(shouldPrint) {
-        shouldGoForward = false;
-        visitedStart = false;
-
+    FloodFill(bool shouldPause = false, bool shouldPrint = false, bool shouldDemo = false) : pause(shouldPause), verbose(shouldPrint), demo(shouldDemo) {
+        // default mode is search mode.
+        mode = MODE_SEARCH;
         // construct map
         for (int r = 0; r != MazeDefinitions::MAZE_LEN; r++){
             for (int c = 0; c != MazeDefinitions::MAZE_LEN; c++){
@@ -212,46 +218,8 @@ public:
         // upper right section
         return x + y - mid - mid;
     }
+    void SearchMode(unsigned x, unsigned y){
 
-
-    MouseMovement nextMovement(unsigned x, unsigned y, const Maze &maze) {
-        // get current cell wall status. (using IR sensors)
-        frontWall = maze.wallInFront();
-        leftWall  = maze.wallOnLeft();
-        rightWall = maze.wallOnRight();
-
-        currMDistance = map[x][y].distance;
-        currHeading = maze.getHeading();   // North | South | East | West
-
-        const unsigned mid = MazeDefinitions::MAZE_LEN / 2;
-
-        // Pause at each cell if the user requests it.
-        // It allows for better viewing on command line.
-        if(pause) {
-            std::cout << "Hit enter to continue..., (" << x << "," << y << "), M=" << currMDistance << " head " << currHeading << std::endl;
-            std::cin.ignore(10000, '\n');
-            std::cin.clear();
-        }
-
-        std::cout << maze.draw(5) << std::endl << std::endl;
-
-        // If we somehow miraculously hit the center
-        // of the maze, just terminate and celebrate!
-        if(isAtCenter(x, y)) {
-            std::cout << "Found center! Good enough for the demo, won't try to get back." << std::endl;
-            return Finish;
-        }
-
-        // If we hit the start of the maze a second time, then
-        // we couldn't find the center and never will...
-        if(x == 0 && y == 0) {
-            if(visitedStart) {
-                std::cout << "Unable to find center, giving up." << std::endl;
-                return Finish;
-            } else {
-                visitedStart = true;
-            }
-        }
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         // step 1: Follow Manhattan Distances downwards towards center, noting down any walls as they pass
         ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -260,10 +228,10 @@ public:
         find_minDistance_and_nextInsn(x,y);
         // if mimMDistance is not changed, then currMDistance is the smallest Mdistance in its neighborhood.
         if(minMDistance != currMDistance)
-            return retval;
+            return;
 
-            
-        std::cout << "Step 1 done...";
+        if(verbose)
+            std::cout << "Step 1 done...";
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         // step 2: Apply floodfill algorithm
@@ -359,7 +327,91 @@ public:
                 std::cout << "}";
         }
         // IR sensors can't sense the back wall, so let's turn around.
-        return TurnAround;
+        retval = TurnAround;
+        return;
+    }
+
+    void HomeBoundMode(unsigned x, unsigned y){
+
+    }
+
+    void FastMode(unsigned x, unsigned y){
+
+    }
+    void contructRoute(){
+        // push origin
+        routeSt1.push(&map[0][0]);
+        Cell* curr = routeSt1.top();
+        while(routeSt1.top()->distance != 0){
+            
+        }
+    }
+
+    MouseMovement nextMovement(unsigned x, unsigned y, const Maze &maze) {
+        // get current cell wall status. (using IR sensors)
+        frontWall = maze.wallInFront();
+        leftWall  = maze.wallOnLeft();
+        rightWall = maze.wallOnRight();
+
+        currMDistance = map[x][y].distance;
+        currHeading = maze.getHeading();   // North | South | East | West
+
+        const unsigned mid = MazeDefinitions::MAZE_LEN / 2;
+
+        // Pause at each cell if the user requests it.
+        // It allows for better viewing on command line.
+        if(pause) {
+            std::cout << "Hit enter to continue..., (" << x << "," << y << "), M=" << currMDistance << " head " << currHeading << std::endl;
+            std::cin.ignore(10000, '\n');
+            std::cin.clear();
+        }
+
+        std::cout << maze.draw(5) << std::endl << std::endl;
+
+        // If we somehow miraculously hit the center
+        // of the maze, just terminate and celebrate!
+        if(isAtCenter(x, y)) {
+            if(demo){
+                std::cout << "Found center! Good enough for the demo, won't try to get back." << std::endl;
+                return Finish;
+            }
+            if(mode == MODE_FAST){
+                std::cout << "Fast run finished!" << std::endl;
+                return Finish;
+            }
+            if(mode != MODE_BACK_HOME){
+                mode = MODE_BACK_HOME;
+            }
+        }
+
+        // If we hit the start of the maze a second time, then either
+        // [1] we couldn't find the center and never will...
+        // [2] we've reached end goal of home run.
+        if(x == 0 && y == 0) {
+            if(mode == MODE_BACK_HOME){
+                std::cout << "Back home run finished!" << std::endl;
+                mode = MODE_FAST;
+            }else if(visitedStart) {
+                std::cout << "Unable to find center, giving up." << std::endl;
+                return Finish;
+            } else {
+                visitedStart = true;
+            }
+        }
+
+
+        switch(mode){
+            case MODE_SEARCH:
+                SearchMode(x,y);
+            break;
+            case MODE_BACK_HOME:
+                HomeBoundMode(x,y);
+            break;
+            case MODE_FAST:
+                FastMode(x,y);
+            break;
+        }
+        return retval;
             
     }
 
@@ -367,10 +419,10 @@ protected:
 
     // debugging purpose. When specify -v option, output more stuffs.
     bool verbose; 
+    // demo. When specify -d option, only run search mode. By default this is false;
+    bool demo;
 
-    // Helps us determine that we should go forward if we have just turned left.
-    bool shouldGoForward;
-
+    Mode mode;
     // Helps us determine if we've made a loop around the maze without finding the center.
     bool visitedStart;
 
@@ -394,6 +446,12 @@ protected:
     // map that holds distances. initially it contains manhatan distances, later on will be modified using floodfill algorithm.
     Cell map[MazeDefinitions::MAZE_LEN][MazeDefinitions::MAZE_LEN];
 
+    // construct fastest route (stacks) for homebound mode and fast mode
+    // preprocess: construct routeSt1, starting from origin and ending at center
+    // homebound: pop cells from routeSt1 and push them in routeSt2
+    // fast run: pop cell from routeSt2 and push them in routeSt1. 
+    stack<Cell*> routeSt1;
+    stack<Cell*> routeSt2;
 
     bool isAtCenter(unsigned x, unsigned y) const {
         unsigned midpoint = MazeDefinitions::MAZE_LEN / 2;
@@ -414,6 +472,7 @@ int main(int argc, char * argv[]) {
     MazeDefinitions::MazeEncodingName mazeName = MazeDefinitions::MAZE_CAMM_2012;
     bool pause = false;
     bool verbose = false;
+    bool demo = false;
     // Since Windows does not support getopt directly, we will
     // have to parse the command line arguments ourselves.
 
@@ -428,16 +487,19 @@ int main(int argc, char * argv[]) {
             pause = true;
         } else if(strcmp(argv[i], "-v") == 0) {
             verbose = true;
+        } else if(strcmp(argv[i], "-d") == 0) {
+            demo = true;
         } else {
-            std::cout << "Usage: " << argv[0] << " [-m N] [-p] [-v]" << std::endl;
+            std::cout << "Usage: " << argv[0] << " [-m N] [-p] [-v] [-d]" << std::endl;
             std::cout << "\t-m N will load the maze corresponding to N, or 0 if invalid N or missing option" << std::endl;
             std::cout << "\t-p will wait for a newline in between cell traversals" << std::endl;
             std::cout << "\t-v will output useful debugging info" << std::endl;
+            std::cout << "\t-d will only perform search run" << std::endl;
             return -1;
         }
     }
 
-    FloodFill floodfill(pause, verbose);
+    FloodFill floodfill(pause, verbose, demo);
     Maze maze(mazeName, &floodfill);
     std::cout << maze.draw(5) << std::endl << std::endl;
 
