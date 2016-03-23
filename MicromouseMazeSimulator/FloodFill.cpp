@@ -11,7 +11,8 @@
  * Use floodfill algorithm
  
    Manhattan Distance = 
-
+   Initially, 
+   use getMDistance to obtain this.
     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  15 |14 |13 |12 |11 |10 | 9 | 8 | 7 | 7 | 8 | 9 |10 |11 |12 |13 |14 |
     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
@@ -51,18 +52,29 @@
 // similar to LeftWallFollower
 class FloodFill : public PathFinder {
 public:
-    enum Section{
-        SECTION_LOWER_LEFT, SECTION_UPPER_LEFT, SECTION_LOWER_RIGHT, SECTION_UPPER_RIGHT, SECTION_INVALID
-    };
+    /**
+     * Cell structure contains information of a single cell of the map.
+     * info includes:  
+     * bool northWall, southWall, eastWall, westWall
+     *      4 adjacent wall status.
+     *      When the mouse walks through the cell, it records the adjacent wall status.
+     * unsigned distance:
+     *      initially, 'distance' hold Manhatan distance(see the above illustration). 
+     *      This value will be modified after applying floodfill algorithm (step 2).
+     * bool visited:
+     *      Tells us whether or not the mouse has visited this cell. We need this because 
+     *      only the cell that the mouse has visited has valid wall status. So before we check
+     *      wall status, we need to make sure that the cell is visited.
+     */
 
-    struct Coord{
-        Coord(){
+    struct Cell{
+        Cell(){
             northWall = true;
             southWall = true;
             eastWall = true;
             westWall = true;
             distance = 16;
-            check = false;
+            visited = false;
         }
         void setWall(Dir d, bool set = false){
             switch(d){
@@ -92,7 +104,7 @@ public:
         bool southWall;
         bool eastWall;
         bool westWall;
-        bool check;
+        bool visited;
         unsigned distance;
         unsigned cx, cy;
     };
@@ -109,15 +121,20 @@ public:
             }
         }
     }
-    void clearCheck(){
-        for (int r = 0; r != MazeDefinitions::MAZE_LEN; r++){
-            for (int c = 0; c != MazeDefinitions::MAZE_LEN; c++){
-                map[r][c].check = false;
-            }
-        } 
-    }
 
-    void find_minDistance_and_nextInsn(unsigned x, unsigned y,bool checkBack = false){
+    // void clearVisited(){
+    //     for (int r = 0; r != MazeDefinitions::MAZE_LEN; r++){
+    //         for (int c = 0; c != MazeDefinitions::MAZE_LEN; c++){
+    //             map[r][c].visited = false;
+    //         }
+    //     } 
+    // }
+
+
+    // for step one. 
+    void find_minDistance_and_nextInsn(unsigned x, unsigned y){
+
+        // calculate the x y coordinates of the 'front' cell.
         unsigned forwardX = 0;
         unsigned forwardY = 0;
         switch(currHeading){
@@ -137,11 +154,17 @@ public:
        
         minMDistance = currMDistance;
   
+        // In the below three if clauses, we check the distance of the adjacent cell and 
+        // set the wall status of the adjacent cell & current cell.
+
         // check the Mdistance of the grid at the front
         if(!frontWall){
+            // set wall status of the current cell
             map[x][y].setWall(currHeading);
+            // set wall status of the cell at the front
             map[x+ forwardX][y+ forwardY].setWall(opposite(currHeading));
-            
+
+            // find min distance
             if(map[x + forwardX][y + forwardY].distance < minMDistance){
                 minMDistance = map[x + forwardX][y + forwardY].distance;
                 retval = MoveForward;
@@ -168,13 +191,14 @@ public:
     }
 
 
+    // only used for initial map construction
     unsigned getManDistance(unsigned x, unsigned y){
         // error checking
         if (x >= MazeDefinitions::MAZE_LEN || y >= MazeDefinitions::MAZE_LEN){
-            // std::cout << "Error: invalid (x,y) coordinates." << std::endl;
+            if(verbose)
+                std::cout << "Error: invalid (x,y) coordinates." << std::endl;
             return -1;
         }
-
         unsigned mid = MazeDefinitions::MAZE_LEN / 2 ;
         // lower left section
         if (x < mid && y < mid)
@@ -189,43 +213,17 @@ public:
         return x + y - mid - mid;
     }
 
-    Section getSection(unsigned x, unsigned y){
-        // error checking
-        if (x >= MazeDefinitions::MAZE_LEN || y >= MazeDefinitions::MAZE_LEN){
-            // std::cout << "Error: invalid (x,y) coordinates." << std::endl;
-            return SECTION_INVALID;
-        }
-        const unsigned mid = MazeDefinitions::MAZE_LEN / 2;
-        // lower left section
-        if (x < mid && y < mid)
-            return SECTION_LOWER_LEFT;
-        // upper left section
-        if (x < mid)
-            return SECTION_UPPER_LEFT;
-        // lower right section
-        if (y < mid)
-            return SECTION_LOWER_RIGHT;
-        // upper right section
-        return SECTION_UPPER_RIGHT;
-    }
-
 
     MouseMovement nextMovement(unsigned x, unsigned y, const Maze &maze) {
-        // const bool NorthWall = maze.wallOnNorth();
-        // const bool SouthWall = maze.wallOnSouth();
-        // const bool EastWall = maze.wallOnEast();
-        // const bool WestWall = maze.wallOnWest();
-
+        // get current cell wall status. (using IR sensors)
         frontWall = maze.wallInFront();
         leftWall  = maze.wallOnLeft();
         rightWall = maze.wallOnRight();
 
-        currMDistance = map[x][y].distance;//getManDistance(x,y);
-        // currSection = getSection(x,y);
-        currHeading = maze.getHeading();
+        currMDistance = map[x][y].distance;
+        currHeading = maze.getHeading();   // North | South | East | West
 
         const unsigned mid = MazeDefinitions::MAZE_LEN / 2;
-
 
         // Pause at each cell if the user requests it.
         // It allows for better viewing on command line.
@@ -258,105 +256,116 @@ public:
         // step 1: Follow Manhattan Distances downwards towards center, noting down any walls as they pass
         ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+        map[x][y].visited = true;
         find_minDistance_and_nextInsn(x,y);
         // if mimMDistance is not changed, then currMDistance is the smallest Mdistance in its neighborhood.
         if(minMDistance != currMDistance)
             return retval;
 
             
-        std::cout << "step 1 done...";
-        // return Finish;
+        std::cout << "Step 1 done...";
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        // step 2: 
+        // step 2: Apply floodfill algorithm
         ////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // define infinity
-        const unsigned INFINITY = 100+MazeDefinitions::MAZE_LEN;
-
-
-        // construct map
+        const unsigned INFINITY = 10*MazeDefinitions::MAZE_LEN;
 
         // new stack //Stack of points to be processed (can also use queue)
-        std::stack<Coord*> st;
+        std::stack<Cell*> st;
 
         // push current cell onto stack
         st.push(&map[x][y]);
-        Coord* curr;        
-        clearCheck();
+        Cell* curr; 
+
 
         while (!st.empty()){
             curr = st.top();
-            curr->check = true;
             st.pop();
+            // set current cell to 'being processed'
+            curr->visited = true;
+            // get current cell coordinates.
             unsigned cx = curr->cx;
             unsigned cy = curr->cy;
+
+            // for debugging purpose
             if(verbose){
-                std::cout << "curr=[" << cx << "][" << cy << "],dis=" <<curr->distance;
+                std::cout << "\ncurr=[" << cx << "][" << cy << "],old dis=" <<curr->distance << " ";
             }
+
+            // don’t want to process the end goal
             if (curr->distance == 0)
-                continue; //don’t want to process the end goal
+                continue; 
+
             minMDistance = INFINITY;
 
-        //     for each neighboring cell of cur:
+            // for each neighboring cell of curr:
       
-            // check the Mdistance of the grid in the north
+            // Similar to step one, find the smallest distance arourd the neighborhood.
+
+            // check the distance of the grid in the north
             if(!map[cx][cy].northWall && (map[cx][cy+1].distance <= minMDistance)){
                 minMDistance = map[cx][cy+1].distance;
             }
-            // check the Mdistance of the grid in the south
+            // check the distance of the grid in the south
             if(!map[cx][cy].southWall && (map[cx][cy-1].distance <= minMDistance)){
                 minMDistance = map[cx][cy-1].distance;
             }
-            // check the Mdistance of the grid in the east
+            // check the distance of the grid in the east
             if(!map[cx][cy].eastWall && (map[cx+1][cy].distance <= minMDistance)){
                 minMDistance = map[cx+1][cy].distance;
             }
-            // check the Mdistance of the grid in the west
+            // check the distance of the grid in the west
             if(!map[cx][cy].westWall && (map[cx-1][cy].distance < minMDistance)){
                 minMDistance = map[cx-1][cy].distance;
             }
 
-            if(minMDistance == INFINITY)
+            
+            if(minMDistance == INFINITY) // shouldn't go in here, if for some reason minMDistance is not changed, then just ignore it.
                 continue;
-            // if (minMDistance == curr->distance + 1) //nothing was updated, move on
-            //     continue;
-            curr->setDistance(minMDistance + 1); //new minimum distance
+
+            if(minMDistance +1 == curr->distance) // nothing was updated, move on
+                continue;
+            
+            curr->setDistance(minMDistance + 1); // set new minimum distance
+             
             
             if(verbose)
-                std::cout << "{calcMin=" << minMDistance << ", set [" << cx << "][" << cy << "]= " << curr->distance << ",push ";
+                std::cout << "{ calcMin=" << minMDistance << ", new dis= " << curr->distance << ", push ";
 
-        //     push every connected neighbor onto stack
-            if(!map[cx][cy].northWall && map[cx][cy+1].check){
+            // push every visited, connected neighbor onto stack (neighbors the mouse passed by and has no adjacent wall.)
+            if((!map[cx][cy].northWall) && map[cx][cy+1].visited){
                 st.push(&map[cx][cy+1]);
                 if(verbose)
                     std::cout << "[" << cx << "][" << cy+1<< "], ";
             }
-            if(!map[cx][cy].southWall && map[cx][cy-1].check){
+            if((!map[cx][cy].southWall) && map[cx][cy-1].visited){
                 st.push(&map[cx][cy-1]);
                 if(verbose)
                     std::cout << "[" << cx << "][" << cy-1 << "], ";
             }
-            if(!map[cx][cy].eastWall && map[cx+1][cy].check){
+            if((!map[cx][cy].eastWall)  && map[cx+1][cy].visited){
                 st.push(&map[cx+1][cy]);
                 if(verbose)
                     std::cout << "[" << cx+1 << "][" << cy << "], ";
             }
-            if(!map[cx][cy].westWall && map[cx-1][cy].check){
+            if((!map[cx][cy].westWall) && map[cx-1][cy].visited){
                 st.push(&map[cx-1][cy]);
                 if(verbose)
                     std::cout << "[" << cx-1 << "][" << cy << "], ";
             }
             if(verbose)
-                std::cout << "} ";
+                std::cout << "}";
         }
+        // IR sensors can't sense the back wall, so let's turn around.
         return TurnAround;
             
     }
 
 protected:
 
-    // debugging purpose
+    // debugging purpose. When specify -v option, output more stuffs.
     bool verbose; 
 
     // Helps us determine that we should go forward if we have just turned left.
@@ -369,9 +378,9 @@ protected:
     // Useful for command line usage.
     const bool pause;
 
-    // record the current Manhattan distance.
+    // the current Manhattan distance.
     unsigned currMDistance;
-    Section currSection;
+    // current heading of the mouse. 
     Dir currHeading;
 
     unsigned minMDistance;
@@ -382,8 +391,8 @@ protected:
     bool leftWall;
     bool rightWall;
 
-    // hold mDistance
-    Coord map[MazeDefinitions::MAZE_LEN][MazeDefinitions::MAZE_LEN];
+    // map that holds distances. initially it contains manhatan distances, later on will be modified using floodfill algorithm.
+    Cell map[MazeDefinitions::MAZE_LEN][MazeDefinitions::MAZE_LEN];
 
 
     bool isAtCenter(unsigned x, unsigned y) const {
@@ -420,9 +429,10 @@ int main(int argc, char * argv[]) {
         } else if(strcmp(argv[i], "-v") == 0) {
             verbose = true;
         } else {
-            std::cout << "Usage: " << argv[0] << " [-m N] [-p]" << std::endl;
+            std::cout << "Usage: " << argv[0] << " [-m N] [-p] [-v]" << std::endl;
             std::cout << "\t-m N will load the maze corresponding to N, or 0 if invalid N or missing option" << std::endl;
             std::cout << "\t-p will wait for a newline in between cell traversals" << std::endl;
+            std::cout << "\t-v will output useful debugging info" << std::endl;
             return -1;
         }
     }
