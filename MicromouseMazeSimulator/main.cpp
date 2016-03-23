@@ -5,6 +5,9 @@
 #include "MazeDefinitions.h"
 #include "PathFinder.h"
 
+// our floodfill algorithm
+#include "FloodFill.h"
+
 /**
  * Demo of a PathFinder implementation.
  *
@@ -18,6 +21,29 @@ public:
         visitedStart = false;
     }
 
+
+  unsigned getManDistance(unsigned x, unsigned y){
+        // error checking
+        if (x >= MazeDefinitions::MAZE_LEN || y >= MazeDefinitions::MAZE_LEN){
+            std::cout << "Error: invalid (x,y) coordinates." << std::endl;
+            return -1;
+        }
+
+        unsigned mid = MazeDefinitions::MAZE_LEN / 2;
+        // lower left section
+        if (x < mid && y < mid)
+            return mid + mid - x - y;
+        // upper left section
+        if (x < mid)
+            return y - x - 1;
+        // lower right section
+        if (y < mid)
+            return x - y - 1;
+        // upper right section
+        return x + y - mid - mid;
+    }
+
+
     MouseMovement nextMovement(unsigned x, unsigned y, const Maze &maze) {
         const bool frontWall = maze.wallInFront();
         const bool leftWall  = maze.wallOnLeft();
@@ -25,7 +51,7 @@ public:
         // Pause at each cell if the user requests it.
         // It allows for better viewing on command line.
         if(pause) {
-            std::cout << "Hit enter to continue..." << std::endl;
+            std::cout << "Hit enter to continue..., (" << x << "," << y << "), M=" << getManDistance(x,y) << std::endl;
             std::cin.ignore(10000, '\n');
             std::cin.clear();
         }
