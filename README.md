@@ -19,6 +19,6 @@ options: <br />
 	`-d`		demo. Only perform first run (search run)<br />
 
 `$ make clean` before we wanna compile updated version <br />	
-if we wanna run left follower, use `$ make LfRun` and `$ ./LfRun [-m N] [-p]` <br />
+if we wanna run left follower, use `$ make leftfollower` and `$ ./LfRun [-m N] [-p]` <br />
 
 Gihub has emoji.:+1::+1::+1:
