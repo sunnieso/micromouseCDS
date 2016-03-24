@@ -54,22 +54,6 @@ public:
     inline Dir getHeading() const {
         return heading;
     }
-    // inline bool wallOnNorth() const {
-    //     return !isOpen(mouseX, mouseY, NORTH);
-    // }
-
-    // inline bool wallOnSouth() const {
-    //     return !isOpen(mouseX, mouseY, SOUTH);
-    // }
-
-    // inline bool wallOnEast() const {
-    //     return !isOpen(mouseX, mouseY, EAST);
-    // }
-
-    // inline bool wallOnWest() const {
-    //     return !isOpen(mouseX, mouseY, WEST);
-    // }
-
     /**
      * Start running the mouse through the maze.
      * Terminates when the PathFinder's nextMovement method returns MouseMovement::Finish.

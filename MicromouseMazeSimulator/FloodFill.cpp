@@ -94,7 +94,6 @@ public:
             southWall = true;
             eastWall = true;
             westWall = true;
-            distance = 16;
             visited = false;
         }
         void setWall(Dir d, bool set = false){
@@ -225,7 +224,6 @@ public:
 
 protected:
 
-
     // debugging purpose. When specify -v option, output more stuffs.
     bool verbose; 
     // demo. When specify -d option, only run search mode. By default this is false;
@@ -265,17 +263,12 @@ protected:
 
     bool isAtCenter(unsigned x, unsigned y) const;
 
-
     // only used for initial map construction
     unsigned getManDistance(unsigned x, unsigned y);
 
     // reset visit history of all cells.
     void clearVisits();
 
-    // Call this after the mouse searched the center for the first time.
-    // This function reassign the distance of all cells based on its 'physical' shortest path from the center. (i.e. consider walls)
-    // need to call 'clearVisits' before using this function.
-    void assign_new_dis(Cell* currCell);
 
     // for search mode step one. Does two things:
     // [1] use front, right, left wall status to find min distance.
@@ -290,6 +283,11 @@ protected:
     // use north,south,east,west wall status to find min distance 
     // when isConstructingRoute is set, check only the cells that the mouse has visited.
     Cell* findMinDistance(unsigned cx, unsigned cy, bool isConstructingRoute);
+
+    // Call this after the mouse searched the center for the first time.
+    // This function reassign the distance of all cells based on its 'physical' shortest path from the center. (i.e. consider walls)
+    // need to call 'clearVisits' before using this function.
+    void assign_new_dis(Cell* currCell);
 
     // After the mouse reached the center for the first time and the distances map has been reassigned,
     // we call this function to construct the 'shortest' route from origin(home) to center.
