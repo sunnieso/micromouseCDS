@@ -21,9 +21,9 @@ const MouseMovement insn_to_west[4] = {TurnClockwise, TurnAround, TurnCounterClo
 /**
  * Our implementation.
  * Use floodfill algorithm
- 
+   
+   Initial values:
    Manhattan Distance = 
-   Initially, 
    use getMDistance to obtain this.
     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  15 |14 |13 |12 |11 |10 | 9 | 8 | 7 | 7 | 8 | 9 |10 |11 |12 |13 |14 |
@@ -34,25 +34,25 @@ const MouseMovement insn_to_west[4] = {TurnClockwise, TurnAround, TurnCounterClo
     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  12 |11 |10 | 9 | 8 | 7 | 6 | 5 | 4 | 4 | 5 | 6 | 7 | 8 | 9 |10 |11 |
     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- 11 |10 | 9 | 8 | 7 | 6 | 5 | 4 | 3 | ...
+ 11 |10 | 9 | 8 | 7 | 6 | 5 | 4 | 3 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |10 |
     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- 10 | 9 | 8 | 7 | 6 | 5 | 4 | 3 | 2 | 
+ 10 | 9 | 8 | 7 | 6 | 5 | 4 | 3 | 2 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- 9  | 8 | 7 | 6 | 5 | 4 | 3 | 2 | 1  ...
+ 9  | 8 | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  8  | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |  
     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  7  | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- 6  | 8 | 7 | 6 | 5 | 4 | 3 | 2 | 1  ...
+ 6  | 8 | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- 5  | 9 | 8 | 7 | 6 | 5 | 4 | 3 | 2  ...
+ 5  | 9 | 8 | 7 | 6 | 5 | 4 | 3 | 2 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- 4  |10 | 9 | 8 | 7 | 6 | 5 | 4 | 3  ...
+ 4  |10 | 9 | 8 | 7 | 6 | 5 | 4 | 3 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |10 |
     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- 3  |11 |10 | 9 | 8 | 7 | 6 | 5 | 4  ...
+ 3  |11 |10 | 9 | 8 | 7 | 6 | 5 | 4 | 4 | 5 | 6 | 7 | 8 | 9 |10 |11 |
     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- 2  |12 |11 |10 | 9 | 8 | 7 | 6 | 5  ...
+ 2  |12 |11 |10 | 9 | 8 | 7 | 6 | 5 | 5 | 6 | 7 | 8 | 9 |10 |11 |12 |
     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  1  |13 |12 |11 |10 | 9 | 8 | 7 | 6 | 6 | 7 | 8 | 9 |10 |11 |12 |13 |
     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
@@ -61,16 +61,17 @@ const MouseMovement insn_to_west[4] = {TurnClockwise, TurnAround, TurnCounterClo
      0    1   2   3   4   5   6   7   8   9  10  11  12  13  14  15 
  */
 
-// similar to LeftWallFollower
+// similar to LeftWallFollower. JK, not really.
 class FloodFill : public PathFinder {
 public:
 
     // algorithm mode
     enum Mode
     {
-        MODE_SEARCH,    // finding distances. Mouse should be at the center when done searching.
-        MODE_BACK_HOME, // After we reach center, find a way to go back home.    
-        MODE_FAST       // second run. Speed run.
+        MODE_SEARCH,        // finding distances. Mouse should be at the center when done searching.
+        MODE_BACK_HOME,     // After we reach center, find a way to go back home.    
+        MODE_FAST,          // second run to center. Speed run.
+        MODE_FAST_BACK_HOME // second run to origin
     };
     /**
      * Cell structure contains information of a single cell of the map.
@@ -128,19 +129,41 @@ public:
         unsigned cx, cy;
     };
 
+    // initial setup
     FloodFill(bool shouldPause = false, bool shouldPrint = false, bool shouldDemo = false) : pause(shouldPause), verbose(shouldPrint), demo(shouldDemo) {
         // default mode is search mode.
         mode = MODE_SEARCH;
-        // construct map
+        // construct map with Manhatan distances
         for (int r = 0; r != MazeDefinitions::MAZE_LEN; r++){
             for (int c = 0; c != MazeDefinitions::MAZE_LEN; c++){
                 map[r][c].distance=getManDistance(r,c);
                 map[r][c].setXY(r,c);
             }
         }      
-        // clearPriority();
     }
 
+    // only used for initial map construction
+    unsigned getManDistance(unsigned x, unsigned y){
+        // error checking
+        if (x >= MazeDefinitions::MAZE_LEN || y >= MazeDefinitions::MAZE_LEN){
+            if(verbose)
+                std::cout << "Error: invalid (x,y) coordinates." << std::endl;
+            return -1;
+        }
+        unsigned mid = MazeDefinitions::MAZE_LEN / 2 ;
+        // lower left section
+        if (x < mid && y < mid)
+            return mid + mid - x - y - 2;
+        // upper left section
+        if (x < mid)
+            return y - x - 1;
+        // lower right section
+        if (y < mid)
+            return x - y - 1;
+        // upper right section
+        return x + y - mid - mid;
+    }
+    // reset visit history of all cells.
     void clearVisits(){
         for (int r = 0; r != MazeDefinitions::MAZE_LEN; r++){
             for (int c = 0; c != MazeDefinitions::MAZE_LEN; c++){
@@ -149,10 +172,11 @@ public:
         }
     }
 
-    // first, clear all visits
+    // Call this after the mouse searched the center for the first time.
+    // This function reassign the distance of all cells based on its 'physical' shortest path from the center. (i.e. consider walls)
+    // need to call 'clearVisits' before using this function.
     void assign_new_dis(Cell* currCell){
         currCell->distance = 0;
-        // currCell->visited = true;
         std::queue<Cell*> qu;
         qu.push(currCell);
         while(qu.front() != &map[0][0]){
@@ -189,49 +213,10 @@ public:
             std::cout << "qu.front() = (" << qu.front()->cx << "," << qu.front()->cy << "). newDis = " << qu.front()->distance << "\n"; 
             std::cout << "Done assigning new distances.\n";
         }
-        // exit(0);
-
     }
 
-    MouseMovement setHeadDirection(unsigned x, unsigned y, unsigned nextX, unsigned nextY, Dir funcHeading){
-        unsigned forwardX = nextX - x;
-        unsigned forwardY = nextY - y;
-        int index;
-  
-        if(forwardX > 0)
-            index = 1;
-        else if(forwardX < 0)
-            index = 3;
-        else if(forwardY > 0)
-            index = 0;
-        else
-            index = 2;
 
-        switch(funcHeading){
-            case NORTH:
-                if(verbose){
-                    std::cout << "funcHeading = NORTH\n";
-                }
-                return insn_to_north[index];
-            case SOUTH:
-                if(verbose){
-                    std::cout << "funcHeading = SOUTH\n";
-                }
-                return insn_to_south[index];
-            case EAST:
-                if(verbose){
-                    std::cout << "funcHeading = EAST\n";
-                }
-                return insn_to_east[index];
-            case WEST:
-                if(verbose){
-                    std::cout << "funcHeading = WEST\n";
-                }
-                return insn_to_west[index];
-        }
-    }
-
-    // for step one. Does two things:
+    // for search mode step one. Does two things:
     // [1] use front, right, left wall status to find min distance.
     // [2] assign return value.(mouse movement)
     void find_minDistance_and_nextInsn(unsigned x, unsigned y){
@@ -293,6 +278,11 @@ public:
             }
         }
     }
+
+
+    // Used in constructing route. Very similar to 'find_minDistance_and_nextInsn'.
+    // use front, right, left wall status to find min distance.
+    // The difference is that it only checks the adjacent cells that the mouse has already visited
     void find_minDistance_and_nextInsn_II(unsigned x, unsigned y, Dir funcHeading){
 
         // calculate the x y coordinates of the 'front' cell.
@@ -328,8 +318,7 @@ public:
         
         minMDistance = map[x][y].distance;
   
-        // In the below three if clauses, we check the distance of the adjacent cell and 
-        // set the wall status of the adjacent cell & current cell.
+        // In the below three if clauses, we check the distance of the adjacent cell which the mouse has already visited.
 
         if(verbose){
             std::cout << "\nII: (" << x << "," << y << "):\n";
@@ -345,9 +334,6 @@ public:
                 std::cout << "II: (" << x - forwardY << "," << y + forwardX << ").distance=" <<  map[x - forwardY][y + forwardX].distance << "\n";
             }
             if( map[x - forwardY][y + forwardX].distance <= minMDistance){
-                // if(verbose){
-                //     std::cout << "II: (" << x - forwardY << "," << y + forwardX << "):visited\n";
-                // }
                 minMDistance = map[x - forwardY][y + forwardX].distance;
                 retval = TurnCounterClockwise;
             }
@@ -385,15 +371,11 @@ public:
 
 
     // use north,south,east,west wall status to find min distance 
-    // if there are multiple minimum, return based on priority: front->right->left
+    // when isConstructingRoute is set, check only the cells that the mouse has visited.
     Cell* findMinDistance(unsigned cx, unsigned cy, bool isConstructingRoute = false){
-        // Cell* minCell[4] = { &map[cx][cy+1], &map[cx+1][cy], &map[cx][cy-1], &map[cx-1][cy] };
         minMDistance = INFINITY;
         Cell* retCell = NULL;
-        if(verbose){
-            // std::cout << "currCell=(" << cx << "," << cy << ")\n";
-         // check the distance of the grid in the north
-        }
+
         if(!map[cx][cy].northWall && (map[cx][cy+1].distance <= minMDistance)){
             if(isConstructingRoute){
                 if(map[cx][cy+1].visited){
@@ -407,10 +389,6 @@ public:
             }else{
                 minMDistance = map[cx][cy+1].distance;
             }
-            
-                if(verbose){
-                    // std::cout << "map[cx][cy+1].visited= " << map[cx][cy+1].visited << ", dis=" <<  minMDistance << "\n";
-                }
         }
         // check the distance of the grid in the south
         if(!map[cx][cy].southWall && (map[cx][cy-1].distance <= minMDistance)){
@@ -426,9 +404,6 @@ public:
             }else{
                 minMDistance = map[cx][cy-1].distance;
             }
-                if(verbose){
-                    // std::cout << "map[cx][cy-1].visited= " << map[cx][cy-1].visited << ", dis=" <<  minMDistance << "\n";
-                }
         }
         // check the distance of the grid in the east
         if(!map[cx][cy].eastWall && (map[cx+1][cy].distance <= minMDistance)){
@@ -444,9 +419,6 @@ public:
             }else{
                 minMDistance = map[cx+1][cy].distance;
             }
-                if(verbose){
-                    // std::cout << "map[cx+1][cy].visited= " << map[cx+1][cy].visited << ", dis=" <<  minMDistance << "\n";
-                }
         }
         // check the distance of the grid in the west
         if(!map[cx][cy].westWall && (map[cx-1][cy].distance < minMDistance)){
@@ -462,9 +434,6 @@ public:
             }else{
                 minMDistance = map[cx-1][cy].distance;
             }
-                if(verbose){
-                    // std::cout << "map[cx-1][cy].visited= " << map[cx-1][cy].visited << ", dis=" <<  minMDistance << "\n";
-                }
         }
         if(verbose){
             std::cout << "final minDistance=" <<  minMDistance << "\n";
@@ -473,99 +442,38 @@ public:
         }
         return retCell;
 
-        // //               north,east,south,west
-        // // bool priority_dirs[4] = {false,false,false,false};
-        // // check the distance of the grid in the north
-        // clearPriority();
-        // if(!map[cx][cy].northWall && (map[cx][cy+1].distance <= minMDistance)){
-        //     minMDistance = map[cx][cy+1].distance;
-        //     priority_dirs[0] = true;
-        // }
-
-        // // check the distance of the grid in the east
-        // if(!map[cx][cy].eastWall && (map[cx+1][cy].distance <= minMDistance)){
-        //     minMDistance = map[cx+1][cy].distance;
-        //     if(map[cx+1][cy].distance < minMDistance){
-        //         clearPriority();
-        //     }
-        //     priority_dirs[1] = true;
-        // }
-
-        // // check the distance of the grid in the south
-        // if(!map[cx][cy].southWall && (map[cx][cy-1].distance <= minMDistance)){
-        //     minMDistance = map[cx][cy-1].distance;
-        //     if(map[cx][cy-1].distance < minMDistance){
-        //         clearPriority();
-        //     }
-        //     priority_dirs[2] = true; 
-        // }
-
-        // // check the distance of the grid in the west
-        // if(!map[cx][cy].westWall && (map[cx-1][cy].distance < minMDistance)){
-        //     minMDistance = map[cx-1][cy].distance;
-        //     if(map[cx-1][cy].distance < minMDistance){
-        //         clearPriority();
-        //     }
-        //     priority_dirs[3] = true;
-            
-        // }
-        // // determine return value
-        // int startInd = 0;
-        // switch(funcHeading){
-        //     case NORTH: startInd = 0;   break;
-        //     case EAST: startInd = 1;   break;
-        //     case SOUTH: startInd = 2;   break;
-        //     case WEST: startInd = 3;   break;
-        // }
-        // if(verbose){
-        //     std::cout << "here\n";
-        //     for(int i = 0; i != 4; i++)
-        //         std::cout << priority_dirs[i] << ", ";
-        //     std::cout << std::endl;
-        // }
-        // while(1){
-        //     if(priority_dirs[startInd%4] == true)
-        //         return minCell[startInd%4];
-        //     startInd++;
-        // }
     }
 
+    // After the mouse reached the center for the first time and the distances map has been reassigned,
+    // we call this function to construct the 'shortest' route from origin(home) to center.
+    // we have two stacks, routeSt1 and routeSt2. routeSt1 stores the instructions needed to traverse from center to home
+    // routeSt2 will store the same but in reverse order when we run HomeBoundMode because routeSt2 push whatever routeSt1 pop. 
     void constructRoute(){
         unsigned forwardX = 0;
         unsigned forwardY = 0;
         // error checking
         if(!routeSt1.empty())
             return;
+
         Cell* currCell = &map[0][0];
         Cell* nextCell;
         Dir funcHeading = NORTH;
         while(currCell->distance != 0){
             find_minDistance_and_nextInsn_II(currCell->cx, currCell->cy, funcHeading);
-        //     MouseMovement nextMovement = setHeadDirection(currCell->cx, currCell->cy, nextCell->cx, nextCell->cy, funcHeading);
+            routeSt1.push(retval);
+
             // update Cell and funcHeading  
             switch(retval){
                 case TurnAround:
-                    if(verbose){
-                        std::cout << "TurnAround, ";
-                    }
                     funcHeading = opposite(funcHeading);
                 break;
                 case TurnClockwise:
-                    if(verbose){
-                        std::cout << "TurnClockwise, ";
-                    }
                     funcHeading = clockwise(funcHeading);
                 break;
                 case TurnCounterClockwise:
-                    if(verbose){
-                        std::cout << "TurnCounterClockwise, ";
-                    }
                     funcHeading = counterClockwise(funcHeading);
                 break;
                 case MoveForward:
-                    if(verbose){
-                        std::cout << "MoveForward, ";
-                    }
                     forwardX = 0;
                     forwardY = 0;
                      // calculate the x y coordinates of the 'front' cell.
@@ -585,37 +493,11 @@ public:
                     }
                     currCell = &map[currCell->cx+forwardX][currCell->cy+forwardY];
                 break;
-                case Wait:
-                    if(verbose){
-                        std::cout << "Wait, ";
-                    }
-                break;
             }
-            routeSt1.push(retval);
         }
     }
     
-    // only used for initial map construction
-    unsigned getManDistance(unsigned x, unsigned y){
-        // error checking
-        if (x >= MazeDefinitions::MAZE_LEN || y >= MazeDefinitions::MAZE_LEN){
-            if(verbose)
-                std::cout << "Error: invalid (x,y) coordinates." << std::endl;
-            return -1;
-        }
-        unsigned mid = MazeDefinitions::MAZE_LEN / 2 ;
-        // lower left section
-        if (x < mid && y < mid)
-            return mid + mid - x - y - 2;
-        // upper left section
-        if (x < mid)
-            return y - x - 1;
-        // lower right section
-        if (y < mid)
-            return x - y - 1;
-        // upper right section
-        return x + y - mid - mid;
-    }
+    // First run searching center
     void SearchMode(unsigned x, unsigned y){
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -634,8 +516,6 @@ public:
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         // step 2: Apply floodfill algorithm
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        
 
         // new stack //Stack of points to be processed (can also use queue)
         std::stack<Cell*> st;
@@ -711,7 +591,8 @@ public:
         retval = TurnAround;
         return;
     }
-   
+    
+    // First run going back home and speed run running back home
     void HomeBoundMode(unsigned x, unsigned y){
         if(routeSt1.empty()){
             retval = Wait;
@@ -726,8 +607,8 @@ public:
             retval = TurnClockwise;
 
     }
-
-    void FastMode(unsigned x, unsigned y){
+    // Speed run running to center
+    void FastMode(){
         if(routeSt2.empty()){
             retval = Wait;
             return;
@@ -736,207 +617,8 @@ public:
         routeSt1.push(retval);
         routeSt2.pop();
     }
-    // rerun floodfill "virtually"
-    void virtualRun(){
-        // set up initial values:
-        Dir virtualheading = NORTH;
-        unsigned vx = 0;
-        unsigned vy = 0;
 
-        while(map[vx][vy].distance != 0){
-            nextMove(vx,vy, virtualheading);
-            switch(retval){
-                case TurnAround:
-                    if(verbose){
-                        std::cout << "TurnAround, ";
-                    }
-                    virtualheading = opposite(virtualheading);
-                break;
-                case TurnClockwise:
-                    if(verbose){
-                        std::cout << "TurnClockwise, ";
-                    }
-                    virtualheading = clockwise(virtualheading);
-                break;
-                case TurnCounterClockwise:
-                    if(verbose){
-                        std::cout << "TurnCounterClockwise, ";
-                    }
-                    virtualheading = counterClockwise(virtualheading);
-                break;
-                case MoveForward:
-                    if(verbose){
-                        std::cout << "MoveForward, ";
-                    }
-                    switch(virtualheading){
-                        case NORTH:
-                            vy++;
-                            break;
-                        case SOUTH:
-                            vy--;
-                            break;
-                        case EAST:
-                            vx++;
-                            break;
-                        case WEST:
-                            vx--;
-                            break;
-                    }
-
-                break;
-                case Wait:
-                    if(verbose){
-                        std::cout << "Wait, ";
-                    }
-                break;
-            }
-        }
-    }
-
-    void nextMove(unsigned vx, unsigned vy, Dir virtualheading){
-         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        // step 1: Follow Manhattan Distances downwards towards center, noting down any walls as they pass
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        find_minDistance_and_nextInsn_II(vx,vy, virtualheading);
-        // if mimMDistance is not changed, then currMDistance is the smallest Mdistance in its neighborhood.
-        if(minMDistance != map[vx][vy].distance)
-            return;
-
-        if(verbose)
-            std::cout << "Step 1 done...";
-
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        // step 2: Apply floodfill algorithm
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        
-
-        // new stack //Stack of points to be processed (can also use queue)
-        std::stack<Cell*> st;
-
-        // push current cell onto stack
-        st.push(&map[vx][vy]);
-        Cell* curr; 
-
-
-        while (!st.empty()){
-            curr = st.top();
-            st.pop();
-            // get current cell coordinates.
-            unsigned cx = curr->cx;
-            unsigned cy = curr->cy;
-
-            // for debugging purpose
-            if(verbose){
-                std::cout << "\ncurr=[" << cx << "][" << cy << "],old dis=" <<curr->distance << " ";
-            }
-
-            // don’t want to process the end goal
-            if (curr->distance == 0)
-                continue; 
-
-
-            // for each neighboring cell of curr:
-      
-            // Similar to step one, find the smallest distance arourd the neighborhood.
-            // assign new value to minMDistance.
-            findMinDistance(cx,cy, true);
-            
-            
-            if(minMDistance == INFINITY) // shouldn't go in here, if for some reason minMDistance is not changed, then just ignore it.
-                continue;
-
-            if(minMDistance +1 == curr->distance) // nothing was updated, move on
-                continue;
-            
-            curr->setDistance(minMDistance + 1); // set new minimum distance
-             
-            
-            if(verbose)
-                std::cout << "{ calcMin=" << minMDistance << ", new dis= " << curr->distance << ", push ";
-
-            // push every visited, connected neighbor onto stack (neighbors the mouse passed by and has no adjacent wall.)
-            if((!map[cx][cy].northWall) && map[cx][cy+1].visited){
-                st.push(&map[cx][cy+1]);
-                if(verbose)
-                    std::cout << "[" << cx << "][" << cy+1<< "], ";
-            }
-            if((!map[cx][cy].southWall) && map[cx][cy-1].visited){
-                st.push(&map[cx][cy-1]);
-                if(verbose)
-                    std::cout << "[" << cx << "][" << cy-1 << "], ";
-            }
-            if((!map[cx][cy].eastWall)  && map[cx+1][cy].visited){
-                st.push(&map[cx+1][cy]);
-                if(verbose)
-                    std::cout << "[" << cx+1 << "][" << cy << "], ";
-            }
-            if((!map[cx][cy].westWall) && map[cx-1][cy].visited){
-                st.push(&map[cx-1][cy]);
-                if(verbose)
-                    std::cout << "[" << cx-1 << "][" << cy << "], ";
-            }
-            if(verbose)
-                std::cout << "}";
-        }
-        // IR sensors can't sense the back wall, so let's turn around.
-        retval = TurnAround;
-        return;
-        // // push origin
-        // routeSt1.push(Wait);
-        // Cell* currCell = &map[0][0];
-        // Cell* nextCell;
-        // Dir funcHeading = NORTH;
-        // while(currCell->distance != 0){
-        //     nextCell = findMinDistance(currCell->cx, currCell->cy, true);
-        //     MouseMovement nextInsn = setHeadDirection(currCell->cx, currCell->cy, nextCell->cx, nextCell->cy, funcHeading);
-
-        //     // if(verbose){
-        //     //     std::cout << "\nminMDistance = " << minMDistance << std::endl;
-        //     //     std::cout << "(" << currCell->cx << ","<< currCell->cy << ")=" << currCell->distance << "nextInsn= ";
-        //     // }
-        //     routeSt1.push(nextInsn);
-        //     // update Cell and funcHeading
-        //     switch(nextInsn){
-        //         case TurnAround:
-        //             if(verbose){
-        //                 std::cout << "TurnAround, ";
-        //             }
-        //             funcHeading = opposite(funcHeading);
-        //         break;
-        //         case TurnClockwise:
-        //             if(verbose){
-        //                 std::cout << "TurnClockwise, ";
-        //             }
-        //             funcHeading = clockwise(funcHeading);
-        //         break;
-        //         case TurnCounterClockwise:
-        //             if(verbose){
-        //                 std::cout << "TurnCounterClockwise, ";
-        //             }
-        //             funcHeading = counterClockwise(funcHeading);
-        //         break;
-        //         case MoveForward:
-        //             if(verbose){
-        //                 std::cout << "MoveForward, ";
-        //             }
-        //         break;
-        //         case Wait:
-        //             if(verbose){
-        //                 std::cout << "Wait, ";
-        //             }
-        //         break;
-        //     }
-        //     currCell = nextCell;
-        //     if(verbose){
-        //     //     std::cout << "nextCell=(" << currCell->cx << ","<< currCell->cy << ")=" << currCell->distance << "\n";
-        //         std::cout << "\n\n";
-        //     }
-        //     // routeSt1.push(findMinDistance(curr->cx,curr->cy));
-        // }
-    }
-
+    // boss function 
     MouseMovement nextMovement(unsigned x, unsigned y, const Maze &maze) {
         // get current cell wall status. (using IR sensors)
         frontWall = maze.wallInFront();
@@ -966,13 +648,13 @@ public:
                 return Finish;
             }
             if(mode == MODE_FAST){
-                std::cout << "Fast run finished!" << std::endl;
-                return Finish;
+                std::cout << "Fast run half way through!" << std::endl;
+                mode = MODE_FAST_BACK_HOME;
+                return TurnAround;
             }
-            if(mode != MODE_BACK_HOME){
+            if(mode == MODE_SEARCH){
                 clearVisits();
                 assign_new_dis(&map[x][y]);
-                // virtualRun();
                 constructRoute();
                 mode = MODE_BACK_HOME;
                 return TurnAround;
@@ -986,8 +668,12 @@ public:
             if(mode == MODE_BACK_HOME){
                 std::cout << "Back home run finished!" << std::endl;
                 mode = MODE_FAST;
-            }else if(visitedStart) {
+                return TurnAround;
+            }else if(mode == MODE_SEARCH && visitedStart) {
                 std::cout << "Unable to find center, giving up." << std::endl;
+                return Finish;
+            }else if(mode == MODE_FAST_BACK_HOME){
+                std::cout << "Fast run FINISH!!!!\n";
                 return Finish;
             } else {
                 visitedStart = true;
@@ -1000,10 +686,11 @@ public:
                 SearchMode(x,y);
             break;
             case MODE_BACK_HOME:
+            case MODE_FAST_BACK_HOME:
                 HomeBoundMode(x,y);
             break;
             case MODE_FAST:
-                FastMode(x,y);
+                FastMode();
             break;
         }
         return retval;
@@ -1032,7 +719,6 @@ protected:
     Dir currHeading;
 
     unsigned minMDistance;
-    unsigned maxMDistance;
     MouseMovement retval;
 
     // keep track of current neighboring walls status
@@ -1050,8 +736,6 @@ protected:
     std::stack<MouseMovement> routeSt1;
     std::stack<MouseMovement> routeSt2;
 
-    // north,east,south,west
-    bool priority_dirs[4];
 
     bool isAtCenter(unsigned x, unsigned y) const {
         unsigned midpoint = MazeDefinitions::MAZE_LEN / 2;
