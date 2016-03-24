@@ -12,7 +12,16 @@
  * Use floodfill algorithm to traverse the maze and to find shortest path.
  * For clarity, sost class functions implementation is at the bottom of this file.
  * 
-   
+ * Basic idea:
+ * [1] use flood fill algorithm(see the slides) to search the center
+ * [2] when at the center, reassign distance values of all cells based on 
+ *     the actual distance from the cell to the center.
+ * [3] construct the shortest 'route' between center and origin
+ * [4] use the 'route' to run back home to finish search run
+ * [5] use the 'route' to run to center for speed run
+ * [6] use the 'route' to run back home for speed run 
+ **  
+
    Initial values:
    Manhattan Distance = 
    use getMDistance to obtain this.
