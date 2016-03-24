@@ -5,7 +5,7 @@
 #include "MazeDefinitions.h"
 #include "PathFinder.h"
 #include <stack>
-
+#include <queue>
 // define infinity
 #define INFINITY 10*MazeDefinitions::MAZE_LEN
  
@@ -141,8 +141,57 @@ public:
         // clearPriority();
     }
 
+    void clearVisits(){
+        for (int r = 0; r != MazeDefinitions::MAZE_LEN; r++){
+            for (int c = 0; c != MazeDefinitions::MAZE_LEN; c++){
+                map[r][c].visited = false;
+            }
+        }
+    }
 
+    // first, clear all visits
+    void assign_new_dis(Cell* currCell){
+        currCell->distance = 0;
+        // currCell->visited = true;
+        std::queue<Cell*> qu;
+        qu.push(currCell);
+        while(qu.front() != &map[0][0]){
+            currCell = qu.front();
+            currCell->visited = true;
+            unsigned newDis = currCell->distance +1;
+            if(verbose){
+                std::cout << "qu.front() = (" << qu.front()->cx << "," << qu.front()->cy << "). newDis = " << currCell->distance << "\n"; 
+            }
+            qu.pop();
+            if(!currCell->northWall && !map[currCell->cx][currCell->cy+1].visited){
+                map[currCell->cx][currCell->cy+1].distance = newDis;
+                qu.push(&map[currCell->cx][currCell->cy+1]);
+            }
 
+            if(!currCell->southWall && !map[currCell->cx][currCell->cy-1].visited){
+                map[currCell->cx][currCell->cy-1].distance = newDis;
+                qu.push(&map[currCell->cx][currCell->cy-1]);
+            }
+
+            if(!currCell->eastWall && !map[currCell->cx+1][currCell->cy].visited){
+                map[currCell->cx+1][currCell->cy].distance = newDis;
+                qu.push(&map[currCell->cx+1][currCell->cy]);
+            }
+
+            if(!currCell->westWall && !map[currCell->cx-1][currCell->cy].visited){
+                map[currCell->cx-1][currCell->cy].distance = newDis;
+                qu.push(&map[currCell->cx-1][currCell->cy]);
+            }
+            
+        }
+        qu.front()->visited = true;
+        if(verbose){
+            std::cout << "qu.front() = (" << qu.front()->cx << "," << qu.front()->cy << "). newDis = " << qu.front()->distance << "\n"; 
+            std::cout << "Done assigning new distances.\n";
+        }
+        // exit(0);
+
+    }
 
     MouseMovement setHeadDirection(unsigned x, unsigned y, unsigned nextX, unsigned nextY, Dir funcHeading){
         unsigned forwardX = nextX - x;
@@ -282,9 +331,23 @@ public:
         // In the below three if clauses, we check the distance of the adjacent cell and 
         // set the wall status of the adjacent cell & current cell.
 
+        if(verbose){
+            std::cout << "\nII: (" << x << "," << y << "):\n";
+            std::cout << "II: current distance=" <<  map[x][y].distance << "\n";
+            std::cout << "II: func_frontWall=" << func_frontWall << std::endl;
+            std::cout << "II: func_rightWall=" << func_rightWall << std::endl;
+            std::cout << "II: func_leftWall=" << func_leftWall << std::endl;
+        }
         // check the Mdistance of the grid on the left
         if(!func_leftWall && map[x - forwardY][y + forwardX].visited){
+            if(verbose){
+                std::cout << "II: (" << x - forwardY << "," << y + forwardX << "):visited\n";
+                std::cout << "II: (" << x - forwardY << "," << y + forwardX << ").distance=" <<  map[x - forwardY][y + forwardX].distance << "\n";
+            }
             if( map[x - forwardY][y + forwardX].distance <= minMDistance){
+                // if(verbose){
+                //     std::cout << "II: (" << x - forwardY << "," << y + forwardX << "):visited\n";
+                // }
                 minMDistance = map[x - forwardY][y + forwardX].distance;
                 retval = TurnCounterClockwise;
             }
@@ -292,6 +355,10 @@ public:
 
         // check the Mdistance of the grid on the right
         if(!func_rightWall && map[x + forwardY][y - forwardX].visited){
+            if(verbose){
+                std::cout << "II: (" << x + forwardY << "," << y - forwardX << "):visited\n";
+                std::cout << "II: (" << x + forwardY << "," << y - forwardX << ").distance=" <<  map[x + forwardY][y - forwardX].distance << "\n";
+            }
             if(map[x + forwardY][y - forwardX].distance <= minMDistance){
                 minMDistance = map[x + forwardY][y - forwardX].distance;
                 retval = TurnClockwise;
@@ -300,11 +367,19 @@ public:
 
         // check the Mdistance of the grid at the front
         if(!func_frontWall && map[x + forwardX][y + forwardY].visited){
+            if(verbose){
+                std::cout << "II: (" << x + forwardX << "," << y + forwardY << "):visited\n";
+                std::cout << "II: (" << x + forwardX << "," << y + forwardY << ").distance=" <<  map[x + forwardX][y + forwardY].distance << "\n";
+            }
             // find min distance
             if(map[x + forwardX][y + forwardY].distance <= minMDistance){
                 minMDistance = map[x + forwardX][y + forwardY].distance;
                 retval = MoveForward;
             }
+        }
+
+        if(verbose){
+                std::cout << "II: obtained minMDistance" <<  minMDistance << "\n";
         }
     }
 
@@ -320,9 +395,15 @@ public:
          // check the distance of the grid in the north
         }
         if(!map[cx][cy].northWall && (map[cx][cy+1].distance <= minMDistance)){
-            if(isConstructingRoute && map[cx][cy+1].visited){
-                minMDistance = map[cx][cy+1].distance;
-                retCell = &map[cx][cy+1];
+            if(isConstructingRoute){
+                if(map[cx][cy+1].visited){
+                    if(verbose){
+                        std::cout << "findMin: (" << cx  << "," << cy+1 << "):visited\n";
+                        std::cout << "findMin: (" << cx << "," << cy+1 << ").distance=" <<  map[cx][cy+1].distance << "\n";
+                    }
+                    minMDistance = map[cx][cy+1].distance;
+                    retCell = &map[cx][cy+1];
+                }
             }else{
                 minMDistance = map[cx][cy+1].distance;
             }
@@ -333,9 +414,15 @@ public:
         }
         // check the distance of the grid in the south
         if(!map[cx][cy].southWall && (map[cx][cy-1].distance <= minMDistance)){
-            if(isConstructingRoute && map[cx][cy-1].visited){
-                minMDistance = map[cx][cy-1].distance;
-                retCell = &map[cx][cy-1];
+            if(isConstructingRoute){
+                if(map[cx][cy-1].visited){
+                    if(verbose){
+                        std::cout << "findMin: (" << cx  << "," << cy-1 << "):visited\n";
+                        std::cout << "findMin: (" << cx << "," << cy-1 << ").distance=" <<  map[cx][cy-1].distance << "\n";
+                    }
+                    minMDistance = map[cx][cy-1].distance;
+                    retCell = &map[cx][cy-1];
+                }
             }else{
                 minMDistance = map[cx][cy-1].distance;
             }
@@ -345,9 +432,15 @@ public:
         }
         // check the distance of the grid in the east
         if(!map[cx][cy].eastWall && (map[cx+1][cy].distance <= minMDistance)){
-            if(isConstructingRoute && map[cx+1][cy].visited){
-                minMDistance = map[cx+1][cy].distance;
-                retCell = &map[cx+1][cy];
+            if(isConstructingRoute){
+                if (map[cx+1][cy].visited){
+                    if(verbose){
+                        std::cout << "findMin: (" << cx+1  << "," << cy << "):visited\n";
+                        std::cout << "findMin: (" << cx+1 << "," << cy << ").distance=" <<  map[cx+1][cy].distance << "\n";
+                    }
+                    minMDistance = map[cx+1][cy].distance;
+                    retCell = &map[cx+1][cy];
+                }
             }else{
                 minMDistance = map[cx+1][cy].distance;
             }
@@ -357,9 +450,15 @@ public:
         }
         // check the distance of the grid in the west
         if(!map[cx][cy].westWall && (map[cx-1][cy].distance < minMDistance)){
-            if(isConstructingRoute && map[cx-1][cy].visited){
-                minMDistance = map[cx-1][cy].distance;
-                retCell = &map[cx-1][cy];
+            if(isConstructingRoute){
+                if( map[cx-1][cy].visited){
+                    if(verbose){
+                        std::cout << "findMin: (" << cx-1  << "," << cy << "):visited\n";
+                        std::cout << "findMin: (" << cx-1 << "," << cy << ").distance=" <<  map[cx-1][cy].distance << "\n";
+                    }
+                    minMDistance = map[cx-1][cy].distance;
+                    retCell = &map[cx-1][cy];
+                }
             }else{
                 minMDistance = map[cx-1][cy].distance;
             }
@@ -432,6 +531,8 @@ public:
     }
 
     void constructRoute(){
+        unsigned forwardX = 0;
+        unsigned forwardY = 0;
         // error checking
         if(!routeSt1.empty())
             return;
@@ -439,11 +540,10 @@ public:
         Cell* nextCell;
         Dir funcHeading = NORTH;
         while(currCell->distance != 0){
-            nextCell = findMinDistance(currCell->cx, currCell->cy, true);
-            MouseMovement nextMovement = setHeadDirection(currCell->cx, currCell->cy, nextCell->cx, nextCell->cy, funcHeading);
-            routeSt1.push(nextMovement);
+            find_minDistance_and_nextInsn_II(currCell->cx, currCell->cy, funcHeading);
+        //     MouseMovement nextMovement = setHeadDirection(currCell->cx, currCell->cy, nextCell->cx, nextCell->cy, funcHeading);
             // update Cell and funcHeading  
-            switch(nextMovement){
+            switch(retval){
                 case TurnAround:
                     if(verbose){
                         std::cout << "TurnAround, ";
@@ -466,6 +566,24 @@ public:
                     if(verbose){
                         std::cout << "MoveForward, ";
                     }
+                    forwardX = 0;
+                    forwardY = 0;
+                     // calculate the x y coordinates of the 'front' cell.
+                    switch(funcHeading){
+                        case NORTH:
+                            forwardY = 1;
+                            break;
+                        case SOUTH:
+                            forwardY = -1;
+                            break;
+                        case EAST:
+                            forwardX = 1;
+                            break;
+                        case WEST:
+                            forwardX = -1;
+                            break;
+                    }
+                    currCell = &map[currCell->cx+forwardX][currCell->cy+forwardY];
                 break;
                 case Wait:
                     if(verbose){
@@ -473,7 +591,7 @@ public:
                     }
                 break;
             }
-            currCell = nextCell;
+            routeSt1.push(retval);
         }
     }
     
@@ -852,9 +970,12 @@ public:
                 return Finish;
             }
             if(mode != MODE_BACK_HOME){
-                virtualRun();
-                // constructRoute();
+                clearVisits();
+                assign_new_dis(&map[x][y]);
+                // virtualRun();
+                constructRoute();
                 mode = MODE_BACK_HOME;
+                return TurnAround;
             }
         }
 
