@@ -5,8 +5,6 @@
 #include "MazeDefinitions.h"
 #include "PathFinder.h"
 
-// our floodfill algorithm
-#include "FloodFill.h"
 
 /**
  * Demo of a PathFinder implementation.

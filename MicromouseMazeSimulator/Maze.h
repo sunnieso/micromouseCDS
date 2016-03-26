@@ -50,10 +50,10 @@ public:
         return !isOpen(mouseX, mouseY, clockwise(heading));
     }
 
-    // // for floodfill detection:
-    inline Dir getHeading() const {
-        return heading;
-    }
+    // // // for floodfill detection:
+    // inline Dir getHeading() const {
+    //     return heading;
+    // }
     /**
      * Start running the mouse through the maze.
      * Terminates when the PathFinder's nextMovement method returns MouseMovement::Finish.

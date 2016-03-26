@@ -65,6 +65,13 @@
 class FloodFill : public PathFinder {
 public:
 
+
+    /*******
+     * 
+     * Helper Structures
+     *
+     **/
+
     // algorithm mode
     enum Mode
     {
@@ -127,6 +134,8 @@ public:
 
     // initial setup
     FloodFill(bool shouldPause = false, bool shouldPrint = false, bool shouldDemo = false) : pause(shouldPause), verbose(shouldPrint), demo(shouldDemo) {
+        // define initial heading to be north
+        currHeading = NORTH;
         // default mode is search mode.
         mode = MODE_SEARCH;
         // construct map with Manhatan distances
@@ -146,9 +155,12 @@ public:
         frontWall = maze.wallInFront();
         leftWall  = maze.wallOnLeft();
         rightWall = maze.wallOnRight();
-
+        // obtain the distance of the current cell that the mouse is at.
         currMDistance = map[x][y].distance;
-        currHeading = maze.getHeading();   // North | South | East | West
+
+        // obtain the current heading
+        setHead(currHeading, retval);
+        // currHeading = maze.getHeading();   // North | South | East | West
 
         const unsigned mid = MazeDefinitions::MAZE_LEN / 2;
 
@@ -255,20 +267,32 @@ protected:
 
     // construct fastest route (stacks) for homebound mode and fast mode
     // preprocess: construct routeSt1, starting from origin and ending at center
-    // homebound: pop cells from routeSt1 and push them in routeSt2
-    // fast run: pop cell from routeSt2 and push them in routeSt1. 
+    // homebound: pop instructions from routeSt1 and push them in routeSt2
+    // fast run: pop instructions from routeSt2 and push them in routeSt1. 
     std::stack<MouseMovement> routeSt1;
     std::stack<MouseMovement> routeSt2;
 
 
+    /*******
+     * 
+     * Member Functions Declaration
+     * (Implementation is at the bottom of the file)
+     *
+     **/
+
+    // In the case that we can't have access to the heading in Maze.h, this function helps us keep track of the current heading.
+    // We call this function at the beginning of nextmovement() so we have updated heading. 
+    void setHead(Dir &oldHeading, MouseMovement insn);
+
+    // same as left follower. Check if the mouse is at the center of the maze.
     bool isAtCenter(unsigned x, unsigned y) const;
 
     // only used for initial map construction
+    // calculate the Manhattan distances of each cell. (result == the illustration above)
     unsigned getManDistance(unsigned x, unsigned y);
 
     // reset visit history of all cells.
     void clearVisits();
-
 
     // for search mode step one. Does two things:
     // [1] use front, right, left wall status to find min distance.
@@ -305,6 +329,7 @@ protected:
     void FastMode();
 
 };
+
 
 int main(int argc, char * argv[]) {
     MazeDefinitions::MazeEncodingName mazeName = MazeDefinitions::MAZE_CAMM_2012;
@@ -346,9 +371,24 @@ int main(int argc, char * argv[]) {
 
 
 /**
- * FloodFill class functions implementation
+ *
+ * FloodFill member functions implementation
  *
  */
+
+void FloodFill::setHead(Dir &oldHeading, MouseMovement insn){
+    switch(insn){
+        case TurnAround:
+            oldHeading = opposite(oldHeading);
+            return;
+        case TurnClockwise:
+            oldHeading = clockwise(oldHeading);
+            return;
+        case TurnCounterClockwise:
+            oldHeading = counterClockwise(oldHeading);
+            return;
+    }
+}
 
  bool FloodFill::isAtCenter(unsigned x, unsigned y) const {
     unsigned midpoint = MazeDefinitions::MAZE_LEN / 2;
@@ -684,37 +724,29 @@ void FloodFill::constructRoute(){
         find_minDistance_and_nextInsn_II(currCell->cx, currCell->cy, funcHeading);
         routeSt1.push(retval);
 
-        // update Cell and funcHeading  
-        switch(retval){
-            case TurnAround:
-                funcHeading = opposite(funcHeading);
-            break;
-            case TurnClockwise:
-                funcHeading = clockwise(funcHeading);
-            break;
-            case TurnCounterClockwise:
-                funcHeading = counterClockwise(funcHeading);
-            break;
-            case MoveForward:
-                forwardX = 0;
-                forwardY = 0;
-                 // calculate the x y coordinates of the 'front' cell.
-                switch(funcHeading){
-                    case NORTH:
-                        forwardY = 1;
-                        break;
-                    case SOUTH:
-                        forwardY = -1;
-                        break;
-                    case EAST:
-                        forwardX = 1;
-                        break;
-                    case WEST:
-                        forwardX = -1;
-                        break;
-                }
-                currCell = &map[currCell->cx+forwardX][currCell->cy+forwardY];
-            break;
+        // update Cell and funcHeading 
+        if (retval == MoveForward){
+            forwardX = 0;
+            forwardY = 0;
+             // calculate the x y coordinates of the 'front' cell.
+            switch(funcHeading){
+                case NORTH:
+                    forwardY = 1;
+                    break;
+                case SOUTH:
+                    forwardY = -1;
+                    break;
+                case EAST:
+                    forwardX = 1;
+                    break;
+                case WEST:
+                    forwardX = -1;
+                    break;
+            }
+            currCell = &map[currCell->cx+forwardX][currCell->cy+forwardY];
+        } else {
+            // take care of Turnaround, TurnCounterClockwise and TurnClockwise.
+            setHead(funcHeading, retval);
         }
     }
 }
