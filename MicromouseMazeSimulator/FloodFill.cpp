@@ -304,6 +304,13 @@ protected:
     // The difference is that it only checks the adjacent cells that the mouse has already visited
     void find_minDistance_and_nextInsn_II(unsigned x, unsigned y, Dir funcHeading);
 
+    // get new values of forwardX and forwardY. 
+    // if current cell is at (x.y)
+    // Cell at the front     ==> (x+forwardX, y+forwardY)
+    // Cell on the right     ==> (x + forwardY, y - forwardX)
+    // Cell on the left      ==> (x - forwardY, y + forwardX)
+    void getForwardXY(unsigned &forwardX, unsigned &forwardY, Dir &heading);
+
     // use north,south,east,west wall status to find min distance 
     // when isConstructingRoute is set, check only the cells that the mouse has visited.
     Cell* findMinDistance(unsigned cx, unsigned cy, bool isConstructingRoute);
@@ -484,22 +491,8 @@ void FloodFill::assign_new_dis(Cell* currCell){
 void FloodFill::find_minDistance_and_nextInsn(unsigned x, unsigned y){
 
     // calculate the x y coordinates of the 'front' cell.
-    unsigned forwardX = 0;
-    unsigned forwardY = 0;
-    switch(currHeading){
-        case NORTH:
-            forwardY = 1;
-            break;
-        case SOUTH:
-            forwardY = -1;
-            break;
-        case EAST:
-            forwardX = 1;
-            break;
-        case WEST:
-            forwardX = -1;
-            break;
-    }
+    unsigned forwardX, forwardY;
+    getForwardXY(forwardX,forwardY, currHeading);
    
     minMDistance = currMDistance;
 
@@ -632,6 +625,31 @@ void FloodFill::find_minDistance_and_nextInsn_II(unsigned x, unsigned y, Dir fun
 }
 
 
+// get new values of forwardX and forwardY. 
+// if current cell is at (x.y)
+// Cell at the front     ==> (x+forwardX, y+forwardY)
+// Cell on the right     ==> (x + forwardY, y - forwardX)
+// Cell on the left      ==> (x - forwardY, y + forwardX)
+void FloodFill::getForwardXY(unsigned &forwardX, unsigned &forwardY, Dir &heading){
+    forwardX = 0;
+    forwardY = 0;
+    switch(heading){
+        case NORTH:
+            forwardY = 1;
+            break;
+        case SOUTH:
+            forwardY = -1;
+            break;
+        case EAST:
+            forwardX = 1;
+            break;
+        case WEST:
+            forwardX = -1;
+            break;
+    }
+}
+
+
 // use north,south,east,west wall status to find min distance 
 // when isConstructingRoute is set, check only the cells that the mouse has visited.
 FloodFill::Cell* FloodFill::findMinDistance(unsigned cx, unsigned cy, bool isConstructingRoute = false){
@@ -711,8 +729,7 @@ FloodFill::Cell* FloodFill::findMinDistance(unsigned cx, unsigned cy, bool isCon
 // we have two stacks, routeSt1 and routeSt2. routeSt1 stores the instructions needed to traverse from center to home
 // routeSt2 will store the same but in reverse order when we run HomeBoundMode because routeSt2 push whatever routeSt1 pop. 
 void FloodFill::constructRoute(){
-    unsigned forwardX = 0;
-    unsigned forwardY = 0;
+    unsigned forwardX, forwardY;
     // error checking
     if(!routeSt1.empty())
         return;
@@ -726,23 +743,7 @@ void FloodFill::constructRoute(){
 
         // update Cell and funcHeading 
         if (retval == MoveForward){
-            forwardX = 0;
-            forwardY = 0;
-             // calculate the x y coordinates of the 'front' cell.
-            switch(funcHeading){
-                case NORTH:
-                    forwardY = 1;
-                    break;
-                case SOUTH:
-                    forwardY = -1;
-                    break;
-                case EAST:
-                    forwardX = 1;
-                    break;
-                case WEST:
-                    forwardX = -1;
-                    break;
-            }
+            getForwardXY(forwardX,forwardY,funcHeading);
             currCell = &map[currCell->cx+forwardX][currCell->cy+forwardY];
         } else {
             // take care of Turnaround, TurnCounterClockwise and TurnClockwise.
@@ -842,7 +843,15 @@ void FloodFill::SearchMode(unsigned x, unsigned y){
             std::cout << "}";
     }
     // IR sensors can't sense the back wall, so let's turn around.
-    retval = TurnAround;
+    // Add additional checks to avoid unnecessary turnarounds.
+    unsigned forwardX, forwardY;
+    getForwardXY(forwardX, forwardY, currHeading);
+    if ( rightWall && leftWall && (frontWall || map[x+forwardX][y+forwardY].distance > map[x][y].distance)){
+        retval = TurnAround;
+    } else {
+        retval = Wait;
+    }
+    
     return;
 }
 
