@@ -25,6 +25,7 @@ if we wanna run left follower, use `$ make leftfollower` and `$ ./LfRun [-m N] [
 - [ ] Assemble hardware
 - [x] FloodFill simulation
 - [ ] PID controller
+- [ ] LED display programming
 More to come...
 
 Gihub has emoji.:+1::+1::+1:
