@@ -414,9 +414,7 @@ void FloodFill::setHead(Dir &oldHeading, MouseMovement insn){
 // only used for initial map construction
 unsigned FloodFill::getManDistance(unsigned x, unsigned y){
     // error checking
-    if (x >= MazeDefinitions::MAZE_LEN || y >= MazeDefinitions::MAZE_LEN){
-        if(verbose)
-            std::cout << "Error: invalid (x,y) coordinates." << std::endl;
+    if (x >= MazeDefinitions::MAZE_LEN || y >= MazeDefinitions::MAZE_LEN
         return -1;
     }
     unsigned mid = MazeDefinitions::MAZE_LEN / 2 ;
@@ -452,9 +450,6 @@ void FloodFill::assign_new_dis(Cell* currCell){
         currCell = qu.front();
         currCell->visited = true;
         unsigned newDis = currCell->distance +1;
-        if(verbose){
-            std::cout << "qu.front() = (" << qu.front()->cx << "," << qu.front()->cy << "). newDis = " << currCell->distance << "\n"; 
-        }
         qu.pop();
         if(!currCell->northWall && !map[currCell->cx][currCell->cy+1].visited){
             map[currCell->cx][currCell->cy+1].distance = newDis;
@@ -478,10 +473,6 @@ void FloodFill::assign_new_dis(Cell* currCell){
         
     }
     qu.front()->visited = true;
-    if(verbose){
-        std::cout << "qu.front() = (" << qu.front()->cx << "," << qu.front()->cy << "). newDis = " << qu.front()->distance << "\n"; 
-        std::cout << "Done assigning new distances.\n";
-    }
 }
 
 
@@ -574,20 +565,8 @@ void FloodFill::find_minDistance_and_nextInsn_II(unsigned x, unsigned y, Dir fun
     minMDistance = map[x][y].distance;
 
     // In the below three if clauses, we check the distance of the adjacent cell which the mouse has already visited.
-
-    if(verbose){
-        std::cout << "\nII: (" << x << "," << y << "):\n";
-        std::cout << "II: current distance=" <<  map[x][y].distance << "\n";
-        std::cout << "II: func_frontWall=" << func_frontWall << std::endl;
-        std::cout << "II: func_rightWall=" << func_rightWall << std::endl;
-        std::cout << "II: func_leftWall=" << func_leftWall << std::endl;
-    }
     // check the Mdistance of the grid on the left
     if(!func_leftWall && map[x - forwardY][y + forwardX].visited){
-        if(verbose){
-            std::cout << "II: (" << x - forwardY << "," << y + forwardX << "):visited\n";
-            std::cout << "II: (" << x - forwardY << "," << y + forwardX << ").distance=" <<  map[x - forwardY][y + forwardX].distance << "\n";
-        }
         if( map[x - forwardY][y + forwardX].distance <= minMDistance){
             minMDistance = map[x - forwardY][y + forwardX].distance;
             retval = TurnCounterClockwise;
@@ -596,10 +575,6 @@ void FloodFill::find_minDistance_and_nextInsn_II(unsigned x, unsigned y, Dir fun
 
     // check the Mdistance of the grid on the right
     if(!func_rightWall && map[x + forwardY][y - forwardX].visited){
-        if(verbose){
-            std::cout << "II: (" << x + forwardY << "," << y - forwardX << "):visited\n";
-            std::cout << "II: (" << x + forwardY << "," << y - forwardX << ").distance=" <<  map[x + forwardY][y - forwardX].distance << "\n";
-        }
         if(map[x + forwardY][y - forwardX].distance <= minMDistance){
             minMDistance = map[x + forwardY][y - forwardX].distance;
             retval = TurnClockwise;
@@ -608,10 +583,6 @@ void FloodFill::find_minDistance_and_nextInsn_II(unsigned x, unsigned y, Dir fun
 
     // check the Mdistance of the grid at the front
     if(!func_frontWall && map[x + forwardX][y + forwardY].visited){
-        if(verbose){
-            std::cout << "II: (" << x + forwardX << "," << y + forwardY << "):visited\n";
-            std::cout << "II: (" << x + forwardX << "," << y + forwardY << ").distance=" <<  map[x + forwardX][y + forwardY].distance << "\n";
-        }
         // find min distance
         if(map[x + forwardX][y + forwardY].distance <= minMDistance){
             minMDistance = map[x + forwardX][y + forwardY].distance;
@@ -619,9 +590,6 @@ void FloodFill::find_minDistance_and_nextInsn_II(unsigned x, unsigned y, Dir fun
         }
     }
 
-    if(verbose){
-            std::cout << "II: obtained minMDistance" <<  minMDistance << "\n";
-    }
 }
 
 
@@ -659,10 +627,6 @@ FloodFill::Cell* FloodFill::findMinDistance(unsigned cx, unsigned cy, bool isCon
     if(!map[cx][cy].northWall && (map[cx][cy+1].distance <= minMDistance)){
         if(isConstructingRoute){
             if(map[cx][cy+1].visited){
-                if(verbose){
-                    std::cout << "findMin: (" << cx  << "," << cy+1 << "):visited\n";
-                    std::cout << "findMin: (" << cx << "," << cy+1 << ").distance=" <<  map[cx][cy+1].distance << "\n";
-                }
                 minMDistance = map[cx][cy+1].distance;
                 retCell = &map[cx][cy+1];
             }
@@ -674,10 +638,6 @@ FloodFill::Cell* FloodFill::findMinDistance(unsigned cx, unsigned cy, bool isCon
     if(!map[cx][cy].southWall && (map[cx][cy-1].distance <= minMDistance)){
         if(isConstructingRoute){
             if(map[cx][cy-1].visited){
-                if(verbose){
-                    std::cout << "findMin: (" << cx  << "," << cy-1 << "):visited\n";
-                    std::cout << "findMin: (" << cx << "," << cy-1 << ").distance=" <<  map[cx][cy-1].distance << "\n";
-                }
                 minMDistance = map[cx][cy-1].distance;
                 retCell = &map[cx][cy-1];
             }
@@ -689,10 +649,6 @@ FloodFill::Cell* FloodFill::findMinDistance(unsigned cx, unsigned cy, bool isCon
     if(!map[cx][cy].eastWall && (map[cx+1][cy].distance <= minMDistance)){
         if(isConstructingRoute){
             if (map[cx+1][cy].visited){
-                if(verbose){
-                    std::cout << "findMin: (" << cx+1  << "," << cy << "):visited\n";
-                    std::cout << "findMin: (" << cx+1 << "," << cy << ").distance=" <<  map[cx+1][cy].distance << "\n";
-                }
                 minMDistance = map[cx+1][cy].distance;
                 retCell = &map[cx+1][cy];
             }
@@ -704,21 +660,12 @@ FloodFill::Cell* FloodFill::findMinDistance(unsigned cx, unsigned cy, bool isCon
     if(!map[cx][cy].westWall && (map[cx-1][cy].distance < minMDistance)){
         if(isConstructingRoute){
             if( map[cx-1][cy].visited){
-                if(verbose){
-                    std::cout << "findMin: (" << cx-1  << "," << cy << "):visited\n";
-                    std::cout << "findMin: (" << cx-1 << "," << cy << ").distance=" <<  map[cx-1][cy].distance << "\n";
-                }
                 minMDistance = map[cx-1][cy].distance;
                 retCell = &map[cx-1][cy];
             }
         }else{
             minMDistance = map[cx-1][cy].distance;
         }
-    }
-    if(verbose){
-        std::cout << "final minDistance=" <<  minMDistance << "\n";
-        if(retCell != NULL)
-            std::cout << "final retCell= (" <<  retCell->cx << "," << retCell->cy << ")" << "\n";
     }
     return retCell;
 
@@ -789,11 +736,6 @@ void FloodFill::SearchMode(unsigned x, unsigned y){
         unsigned cx = curr->cx;
         unsigned cy = curr->cy;
 
-        // for debugging purpose
-        if(verbose){
-            std::cout << "\ncurr=[" << cx << "][" << cy << "],old dis=" <<curr->distance << " ";
-        }
-
         // don’t want to process the end goal
         if (curr->distance == 0)
             continue; 
@@ -815,32 +757,19 @@ void FloodFill::SearchMode(unsigned x, unsigned y){
         curr->setDistance(minMDistance + 1); // set new minimum distance
          
         
-        if(verbose)
-            std::cout << "{ calcMin=" << minMDistance << ", new dis= " << curr->distance << ", push ";
-
         // push every visited, connected neighbor onto stack (neighbors the mouse passed by and has no adjacent wall.)
         if((!map[cx][cy].northWall) && map[cx][cy+1].visited){
             st.push(&map[cx][cy+1]);
-            if(verbose)
-                std::cout << "[" << cx << "][" << cy+1<< "], ";
         }
         if((!map[cx][cy].southWall) && map[cx][cy-1].visited){
             st.push(&map[cx][cy-1]);
-            if(verbose)
-                std::cout << "[" << cx << "][" << cy-1 << "], ";
         }
         if((!map[cx][cy].eastWall)  && map[cx+1][cy].visited){
             st.push(&map[cx+1][cy]);
-            if(verbose)
-                std::cout << "[" << cx+1 << "][" << cy << "], ";
         }
         if((!map[cx][cy].westWall) && map[cx-1][cy].visited){
             st.push(&map[cx-1][cy]);
-            if(verbose)
-                std::cout << "[" << cx-1 << "][" << cy << "], ";
         }
-        if(verbose)
-            std::cout << "}";
     }
     // IR sensors can't sense the back wall, so let's turn around.
     // Add additional checks to avoid unnecessary turnarounds.
