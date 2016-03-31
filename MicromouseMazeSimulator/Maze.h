@@ -8,6 +8,45 @@
 #include "Dir.h"
 #include "PathFinder.h"
 
+
+    struct Cell{
+        Cell(){
+            northWall = true;
+            southWall = true;
+            eastWall = true;
+            westWall = true;
+            visited = false;
+        }
+        void setWall(Dir d, bool set = false){
+            switch(d){
+                case NORTH: 
+                    northWall = set;
+                    break;
+                case SOUTH: 
+                    southWall = set;
+                    break;
+                case EAST: 
+                    eastWall = set;
+                    break;
+                case WEST: 
+                    westWall = set;
+                    break;
+            }
+        }
+        void setDistance(unsigned newDistance){
+            distance = newDistance;
+        }
+
+        bool northWall;
+        bool southWall;
+        bool eastWall;
+        bool westWall;
+        bool visited;
+        unsigned distance;
+        unsigned cx, cy;
+    };
+
+
 class Maze {
 protected:
     BitVector256 wallNS;
@@ -49,6 +88,56 @@ public:
     inline bool wallOnRight() const {
         return !isOpen(mouseX, mouseY, clockwise(heading));
     }
+        /**
+     * Cell structure contains information of a single cell of the map.
+     * info includes:  
+     * bool northWall, southWall, eastWall, westWall
+     *      4 adjacent wall status.
+     *      When the mouse walks through the cell, it records the adjacent wall status.
+     * unsigned distance:
+     *      initially, 'distance' hold Manhatan distance(see the above illustration). 
+     *      This value will be modified after applying floodfill algorithm (step 2).
+     * bool visited:
+     *      Tells us whether or not the mouse has visited this cell. We need this because 
+     *      only the cell that the mouse has visited has valid wall status. So before we check
+     *      wall status, we need to make sure that the cell is visited.
+     */
+    struct Cell{
+        Cell(){
+            northWall = true;
+            southWall = true;
+            eastWall = true;
+            westWall = true;
+            visited = false;
+        }
+        void setWall(Dir d, bool set = false){
+            switch(d){
+                case NORTH: 
+                    northWall = set;
+                    break;
+                case SOUTH: 
+                    southWall = set;
+                    break;
+                case EAST: 
+                    eastWall = set;
+                    break;
+                case WEST: 
+                    westWall = set;
+                    break;
+            }
+        }
+        void setDistance(unsigned newDistance){
+            distance = newDistance;
+        }
+
+        bool northWall;
+        bool southWall;
+        bool eastWall;
+        bool westWall;
+        bool visited;
+        unsigned distance;
+        unsigned cx, cy;
+    };
 
     // // // for floodfill detection:
     // inline Dir getHeading() const {

@@ -1,6 +1,6 @@
 #include <iostream>
 #include "Maze.h"
-
+#include <cstdlib>
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(*a))
 
 Maze::Maze(MazeDefinitions::MazeEncodingName name, PathFinder *pathFinder)

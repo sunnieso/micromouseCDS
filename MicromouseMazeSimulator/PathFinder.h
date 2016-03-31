@@ -46,12 +46,12 @@ public:
      * @param maxInfoLen: number of characters to be inserted per cell. Rest of returned characters are ignored.
      * @return string of info
      */
-    virtual std::string getInfo(unsigned x, unsigned y, size_t maxInfoLen) {
-        (void)x;
-        (void)y;
-        (void)maxInfoLen;
-        return "";
-    }
+    virtual std::string getInfo(unsigned x, unsigned y, size_t maxInfoLen) = 0;// {
+        // (void)x;
+        // (void)y;
+        // (void)maxInfoLen;
+        // return "";
+    // }
 };
 
 #endif
