@@ -156,9 +156,13 @@ public:
             }
             if(mode == MODE_SEARCH){
                 clearVisits();
-                assign_new_dis(&map[x][y]);
-                constructRoute();
+                // assign new distances 
+                setNewDistance();
                 mode = MODE_BACK_HOME;
+                return MoveForward;
+            }
+            if(mode == MODE_FAST){
+                mode = MODE_FAST_BACK_HOME;
                 return TurnAround;
             }
         }
@@ -169,6 +173,9 @@ public:
         if(x == 0 && y == 0) {
             if(mode == MODE_BACK_HOME){
                 std::cout << "Back home run finished!" << std::endl;
+                clearVisits();
+                assign_new_dis(&map[x][y]);
+                constructRoute();
                 mode = MODE_FAST;
                 return TurnAround;
             }else if(mode == MODE_SEARCH && visitedStart) {
@@ -185,9 +192,9 @@ public:
         // switch to algorithm
         switch(mode){
             case MODE_SEARCH:
+            case MODE_BACK_HOME:
                 SearchMode(x,y);
             break;
-            case MODE_BACK_HOME:
             case MODE_FAST_BACK_HOME:
                 HomeBoundMode(x,y);
             break;
@@ -224,7 +231,6 @@ protected:
     // Indicates we should pause before moving to next cell.
     // Useful for command line usage.
     const bool pause;
-
     // the current Manhattan distance.
     unsigned currMDistance;
     // current heading of the mouse. 
@@ -267,6 +273,13 @@ protected:
     // calculate the Manhattan distances of each cell. (result == the illustration above)
     unsigned getManDistance(unsigned x, unsigned y);
 
+    void setNewDistance(){
+        for(int i = 0; i != MazeDefinitions::MAZE_LEN; i++){
+            for(int j = 0; j != MazeDefinitions::MAZE_LEN; j++){
+                map[i][j].distance = i+j;
+            }
+        }
+    }
     // reset visit history of all cells.
     void clearVisits();
 
@@ -308,6 +321,7 @@ protected:
     // First run going back home and speed run running back home
     void HomeBoundMode(unsigned x, unsigned y);
 
+    void SearchBackMode(unsigned x, unsigned y);
     // Speed run running to center
     void FastMode();
 
@@ -425,7 +439,21 @@ void FloodFill::clearVisits(){
 void FloodFill::assign_new_dis(Cell* currCell){
     currCell->distance = 0;
     std::queue<Cell*> qu;
-    qu.push(currCell);
+
+    unsigned midpoint = MazeDefinitions::MAZE_LEN / 2;
+    map[midpoint][midpoint].visited = true;
+    map[midpoint-1][midpoint].visited = true;
+    map[midpoint][midpoint-1].visited = true;
+    map[midpoint-1][midpoint-1].visited = true;
+    map[midpoint][midpoint].distance = 0;
+    map[midpoint-1][midpoint].distance = 0;
+    map[midpoint][midpoint-1].distance = 0;
+    map[midpoint-1][midpoint-1].distance = 0;
+
+    qu.push(&map[midpoint][midpoint]);
+    qu.push(&map[midpoint-1][midpoint]);
+    qu.push(&map[midpoint][midpoint-1]);
+    qu.push(&map[midpoint-1][midpoint-1]);
     while(qu.front() != &map[0][0]){
         currCell = qu.front();
         currCell->visited = true;
@@ -728,6 +756,11 @@ void FloodFill::constructRoute(){
             setHead(funcHeading, retval);
         }
     }
+    while(!routeSt1.empty()){
+        retval = routeSt1.top();
+        routeSt1.pop();
+        routeSt2.push(retval);
+    }
 }
 
 // First run searching center
@@ -824,9 +857,14 @@ void FloodFill::SearchMode(unsigned x, unsigned y){
     // Add additional checks to avoid unnecessary turnarounds.
     unsigned forwardX, forwardY;
     getForwardXY(forwardX, forwardY, currHeading);
-    if ( rightWall && leftWall && (frontWall || map[x+forwardX][y+forwardY].distance > map[x][y].distance)){
+    findMinDistance(x,y);
+    if ( map[x-forwardX][y-forwardY].distance == minMDistance || 
+        (rightWall && leftWall && (frontWall || map[x+forwardX][y+forwardY].distance > map[x][y].distance))){
         retval = TurnAround;
     } else {
+        if(verbose){
+            std::cout << "wait" << std::endl;
+        }
         retval = Wait;
     }
     
@@ -857,4 +895,9 @@ void FloodFill::FastMode(){
     retval = routeSt2.top();
     routeSt1.push(retval);
     routeSt2.pop();
+}
+
+
+void FloodFill::SearchBackMode(unsigned x, unsigned y){
+    ;
 }
